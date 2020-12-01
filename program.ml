@@ -21,30 +21,6 @@ module List = struct
   let lines = String.split_on_char '\n'
 end
 
-(*module type Solver = sig
-  val naloga1 : string -> string
-
-  val naloga2 : string -> string -> string
-end
-
-module Solver0 : Solver = struct
-  let cost_fun x = (x / 3) - 2
-
-  let rec full_cost x =
-    let c_cost = cost_fun x in
-    if c_cost <= 0 then 0 else c_cost + full_cost c_cost
-
-  let naloga1 data =
-    let lines = List.lines data in
-    lines |> List.int_list
-    |> List.fold_left (fun s x -> s + cost_fun x) 0
-    |> string_of_int
-
-  let naloga2 data _part1 =
-    data |> List.lines |> List.int_list |> List.map full_cost |> List.sum
-    |> string_of_int
-end*)
-
 module type Solver = sig
   val naloga1 : string -> string
 
@@ -95,7 +71,6 @@ end
 
 (* Poženemo zadevo *)
 let choose_solver : string -> (module Solver) = function
-  (*| "0" -> (module Solver0)*)
   | "1" -> (module Solver1)
   | _ -> failwith "Ni še rešeno"
 
