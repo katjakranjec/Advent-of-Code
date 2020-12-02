@@ -69,9 +69,52 @@ module Solver1 : Solver = struct
     preverjanje nekej
 end
 
+module Solver2 : Solver = struct
+
+  let trije_deli = String.split_on_char ' '
+  let prvi_del = function
+    | [] -> ""
+    | a :: _ -> a
+  let drugi_del = function
+    | [] | _ :: [] -> ""
+    | _ :: b :: _ -> b
+  let tretji_del = function
+    | [] | _ :: [] | _ :: _ :: [] -> ""
+    | _ :: _ :: c :: _ -> c
+  let razdeljen_prvi_del = String.split_on_char '-'
+  let razdeljen_drugi_del = String.split_on_char ':'
+  let vrni_prvega = function
+    | [] -> ""
+    | a :: _ -> a
+  let vrni_drugega = function
+    | [] | _ :: [] -> ""
+    | _ :: b :: _-> b
+
+  let neka_druga_funkcija geslo =
+    let min = int_of_string (vrni_prvega (razdeljen_prvi_del (prvi_del (trije_deli geslo)))) in
+    let max = int_of_string (vrni_drugega (razdeljen_prvi_del (prvi_del (trije_deli geslo)))) in
+    let crka = vrni_prvega (razdeljen_drugi_del (drugi_del (trije_deli geslo))) in
+    let crka1 = String.get crka 0 in
+    let is_crka x = if (x = crka1) then '1' else '0' in
+    let ostanek = String.map (is_crka) (tretji_del (trije_deli geslo)) in
+    let dolzina_stringa = String.length ostanek in
+    let pravilno_geslo = if (min <= dolzina_stringa && dolzina_stringa <= max) then 1 else 0 in
+    pravilno_geslo
+
+  let naloga1 data =
+    let vrstice = List.lines data in
+    let nov_seznam = List.map (neka_druga_funkcija) (vrstice) in
+    let sum_of_list = string_of_int (List.sum nov_seznam) in
+    sum_of_list
+
+  let naloga2 data _part1 = ""
+
+end
+
 (* Poženemo zadevo *)
 let choose_solver : string -> (module Solver) = function
   | "1" -> (module Solver1)
+  | "2" -> (module Solver2)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
