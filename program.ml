@@ -165,10 +165,68 @@ module Solver2 : Solver = struct
 
 end
 
+module Solver3 : Solver = struct
+
+  let explode s =
+    let rec exp i l =
+      if i < 0 then l else exp (i - 1) (s.[i] :: l) in
+    exp (String.length s - 1) []
+  (* Vir: https://stackoverflow.com/questions/10068713/string-to-list-of-char/10069969 *)
+
+  let rec string n s =
+    if n = 0 then "" else s ^ string (n - 1) s
+  (*Vir: https://stackoverflow.com/questions/46370362/recursive-function-to-repeat-string-in-ocaml*)
+
+  let ceu_zemljevid seznam =
+    let rec ceu_zemljevid_pomozna seznam nov_seznam = match seznam with
+      | [] -> nov_seznam
+      | x :: xs -> ceu_zemljevid_pomozna xs (nov_seznam @ [explode (string 80 x)])
+    in
+    ceu_zemljevid_pomozna seznam []
+
+  let naloga1 data =
+    let vrstice = List.lines data in
+    let zemljevid = ceu_zemljevid vrstice in
+    let zemljevid1 = List.tl zemljevid in
+    let rec preverjanje column zemlevid drevesa = match zemlevid with
+      | [] -> string_of_int drevesa
+      | x :: xs -> if ((List.nth x column) = '#') then (preverjanje (column+3) xs (drevesa+1)) else (preverjanje (column+3) xs (drevesa))
+    in
+    preverjanje 3 zemljevid1 0
+
+  let rec preverjanje1 column zemlevid drevesa = match zemlevid with
+      | [] -> drevesa
+      | x :: xs -> if ((List.nth x column) = '#') then (preverjanje1 (column+1) xs (drevesa+1)) else (preverjanje1 (column+1) xs (drevesa))
+
+  let rec preverjanje2 column zemlevid drevesa = match zemlevid with
+      | [] -> drevesa
+      | x :: xs -> if ((List.nth x column) = '#') then (preverjanje2 (column+3) xs (drevesa+1)) else (preverjanje2 (column+3) xs (drevesa))
+
+  let rec preverjanje3 column zemlevid drevesa = match zemlevid with
+      | [] -> drevesa
+      | x :: xs -> if ((List.nth x column) = '#') then (preverjanje3 (column+5) xs (drevesa+1)) else (preverjanje3 (column+5) xs (drevesa))
+
+  let rec preverjanje4 column zemlevid drevesa = match zemlevid with
+      | [] -> drevesa
+      | x :: xs -> if ((List.nth x column) = '#') then (preverjanje4 (column+7) xs (drevesa+1)) else (preverjanje4 (column+7) xs (drevesa))
+
+  let rec preverjanje5 column zemlevid drevesa = match zemlevid with
+      | [] | _ :: [] -> drevesa
+      | _ :: x :: xs -> if ((List.nth x column) = '#') then (preverjanje5 (column+1) xs (drevesa+1)) else (preverjanje5 (column+1) xs (drevesa))
+
+  let naloga2 data _part1 =
+    let vrstice = List.lines data in
+    let zemljevid = ceu_zemljevid vrstice in
+    let zemljevid1 = List.tl zemljevid in
+    let rezultat = string_of_int ((preverjanje1 1 zemljevid1 0) * (preverjanje2 3 zemljevid1 0) * (preverjanje3 5 zemljevid1 0) * (preverjanje4 7 zemljevid1 0) * (preverjanje5 1 zemljevid1 0)) in
+    rezultat
+end
+
 (* Poženemo zadevo *)
 let choose_solver : string -> (module Solver) = function
   | "1" -> (module Solver1)
   | "2" -> (module Solver2)
+  | "3" -> (module Solver3)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
@@ -176,6 +234,7 @@ let main () =
   print_endline ("Solving DAY: " ^ day);
   let (module Solver) = choose_solver day in
   let input_data = preberi_datoteko ("data/day_" ^ day ^ ".in") in
+  print_endline input_data;
   let p1_start = Sys.time () in
   let part1 = Solver.naloga1 input_data in
   let t1_time = Sys.time () -. p1_start in
