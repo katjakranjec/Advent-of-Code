@@ -83,22 +83,60 @@ module Solver2 : Solver = struct
     | _ :: _ :: c :: _ -> c
   let razdeljen_prvi_del = String.split_on_char '-'
   let razdeljen_drugi_del = String.split_on_char ':'
-  let vrni_prvega = function
-    | [] -> ""
-    | a :: _ -> a
-  let vrni_drugega = function
-    | [] | _ :: [] -> ""
-    | _ :: b :: _-> b
+  let vrni_prvega l = (List.nth l 0)
+  let vrni_drugega l = (List.nth l 1)
+  let vrni_prvega1 = function
+  | [] -> ""
+  | a :: _ -> a
+
+  let prosm_delej = function
+    | "0" -> 0
+    | "1" -> 1
+    | "2" -> 2
+    | "3" -> 3
+    | "4" -> 4
+    | "5" -> 5
+    | "6" -> 6
+    | "7" -> 7
+    | "8" -> 8
+    | "9" -> 9
+    | "10" -> 10
+    | "11" -> 11
+    | "12" -> 12
+    | "13" -> 13
+    | "14" -> 14
+    | "15" -> 15
+    | "16" -> 16
+    | "17" -> 17
+    | "18" -> 18
+    | "19" -> 19
+    | "20" -> 20
+    | _ -> failwith "Več možnosti je"
+
+  let explode s =
+    let rec exp i l =
+      if i < 0 then l else exp (i - 1) (s.[i] :: l) in
+    exp (String.length s - 1) []
+  (* Vir: https://stackoverflow.com/questions/10068713/string-to-list-of-char/10069969 *)
+  
+  
+  let prestevanje list = 
+    let rec prestevanje_pomozna list stevilka = match list with
+      | [] -> stevilka
+      | x :: xs -> if x = '1' then prestevanje_pomozna xs (stevilka + 1) else prestevanje_pomozna xs stevilka
+    in
+    prestevanje_pomozna list 0
+
 
   let neka_druga_funkcija geslo =
-    let min = int_of_string (vrni_prvega (razdeljen_prvi_del (prvi_del (trije_deli geslo)))) in
-    let max = int_of_string (vrni_drugega (razdeljen_prvi_del (prvi_del (trije_deli geslo)))) in
-    let crka = vrni_prvega (razdeljen_drugi_del (drugi_del (trije_deli geslo))) in
+    let min = prosm_delej (vrni_prvega (razdeljen_prvi_del (prvi_del (trije_deli geslo)))) in
+    let max =  prosm_delej (vrni_drugega (razdeljen_prvi_del (prvi_del (trije_deli geslo)))) in
+    let crka = vrni_prvega1 (razdeljen_drugi_del (drugi_del (trije_deli geslo))) in
     let crka1 = String.get crka 0 in
-    let is_crka x = if (x = crka1) then '1' else '0' in
+    let is_crka x = if (x = crka1) then '1' else ' ' in
     let ostanek = String.map (is_crka) (tretji_del (trije_deli geslo)) in
-    let dolzina_stringa = String.length ostanek in
-    let pravilno_geslo = if (min <= dolzina_stringa && dolzina_stringa <= max) then 1 else 0 in
+    let stevilo_pojavitev = prestevanje (explode ostanek) in
+    let pravilno_geslo = if (min <= stevilo_pojavitev && stevilo_pojavitev <= max) then 1 else 0 in
     pravilno_geslo
 
   let naloga1 data =
@@ -107,7 +145,23 @@ module Solver2 : Solver = struct
     let sum_of_list = string_of_int (List.sum nov_seznam) in
     sum_of_list
 
-  let naloga2 data _part1 = ""
+  let razdelitev2 = String.split_on_char ':'
+
+  let neka_druga_funkcija2 geslo =
+    let min = prosm_delej (vrni_prvega (razdeljen_prvi_del (prvi_del (trije_deli geslo)))) in
+    let max =  prosm_delej (vrni_drugega (razdeljen_prvi_del (prvi_del (trije_deli geslo)))) in
+    let min_mesto = List.nth (explode (drugi_del (razdelitev2 geslo))) min in
+    let max_mesto = List.nth (explode (drugi_del (razdelitev2 geslo))) max in
+    let crka = vrni_prvega1 (razdeljen_drugi_del (drugi_del (trije_deli geslo))) in
+    let crka1 = String.get crka 0 in
+    let pravilno_geslo = if (min_mesto = crka1 || max_mesto = crka1) && (not (min_mesto = crka1 && max_mesto = crka1)) then 1 else 0 in
+    pravilno_geslo
+
+  let naloga2 data _part1 =
+    let vrstice = List.lines data in
+    let nov_seznam = List.map (neka_druga_funkcija2) (vrstice) in
+    let sum_of_list = string_of_int (List.sum nov_seznam) in
+    sum_of_list
 
 end
 
