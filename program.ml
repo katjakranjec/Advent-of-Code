@@ -358,6 +358,61 @@ module Solver4 : Solver = struct
 
 end
 
+module Solver5 : Solver = struct
+
+  let explode s =
+    let rec exp i l =
+      if i < 0 then l else exp (i - 1) (s.[i] :: l) in
+    exp (String.length s - 1) []
+  (* Vir: https://stackoverflow.com/questions/10068713/string-to-list-of-char/10069969 *)
+
+  let rec test_plane seznam nov_seznam = match seznam with
+    | [] -> nov_seznam
+    | x1 :: rest1 -> let rec seat_ID seznam row_min row_max column_min column_max = match seznam with
+                      | [] -> test_plane rest1 (nov_seznam @ [((row_min - 1) * 8) + (column_min -1)])
+                      | x2 :: rest2 -> let fblr znak = match znak with
+                                        | 'F' -> seat_ID rest2 row_min (row_max - (((row_max - row_min) + 1) / 2)) column_min column_max
+                                        | 'B' -> seat_ID rest2 (row_min + (((row_max - row_min) + 1) / 2)) row_max column_min column_max
+                                        | 'L' -> seat_ID rest2 row_min row_max column_min (column_max - (((column_max - column_min) + 1) / 2))
+                                        | 'R' -> seat_ID rest2 row_min row_max (column_min + (((column_max - column_min) + 1) / 2)) column_max
+                                        | _ -> failwith "Neki ne dela"
+                                        in
+                                        fblr x2
+                      in
+                      seat_ID (explode x1) 1 128 1 8
+
+  let rec max_ID seznam maximum = match seznam with
+    | [] -> maximum
+    | x :: xs -> if (x >= maximum) then max_ID xs x else max_ID xs maximum
+
+
+  let naloga1 data =
+    let vrstice = List.lines data in
+    let seznam_stevilk = test_plane vrstice [] in
+    let rezultat = string_of_int (max_ID seznam_stevilk 0) in
+    rezultat
+  
+  let rec keri_IDi_manjkajo seznam_idev row1 manjkajo1 = match row1 with
+    | 1 -> manjkajo1
+    | _ -> let rec keri_columni_manjkajo seznam_idev row column manjkajo = match column with
+            | 0 -> keri_IDi_manjkajo seznam_idev (row-1) manjkajo
+            | _ -> if (List.mem (((row - 1) * 8) + (column - 1)) seznam_idev) 
+                   then keri_columni_manjkajo seznam_idev row (column - 1) manjkajo
+                   else keri_columni_manjkajo seznam_idev row (column - 1) (manjkajo @ [((row - 1) * 8) + (column - 1)])
+           in
+           keri_columni_manjkajo seznam_idev row1 8 manjkajo1
+
+  let rec najdi_tapravga seznam_idev manjkajo = match manjkajo with
+    | [] -> failwith "Neki ne dela"
+    | x :: xs -> if (List.mem (x + 1) seznam_idev) && (List.mem (x + 1) seznam_idev) then x else najdi_tapravga seznam_idev xs
+  
+  let naloga2 data _part1 =
+    let vrstice = List.lines data in
+    let seznam_seatov = test_plane vrstice [] in
+    let rezultat2 = string_of_int (najdi_tapravga seznam_seatov (keri_IDi_manjkajo seznam_seatov 127 [])) in
+    rezultat2
+
+end
 
 (* Poženemo zadevo *)
 let choose_solver : string -> (module Solver) = function
@@ -365,6 +420,7 @@ let choose_solver : string -> (module Solver) = function
   | "2" -> (module Solver2)
   | "3" -> (module Solver3)
   | "4" -> (module Solver4)
+  | "5" -> (module Solver5)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
