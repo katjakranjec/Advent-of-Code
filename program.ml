@@ -414,6 +414,76 @@ module Solver5 : Solver = struct
 
 end
 
+module Solver6 : Solver = struct
+
+  let rec one_group seznam new_group = match seznam with
+        | [] -> []
+        | x :: xs -> if (String.length x) = 0 then new_group else one_group xs (new_group @ [x])
+
+  let rec seznam_brez_prvih_n_elementov seznam n = if n <= 0 then seznam else seznam_brez_prvih_n_elementov (List.tl seznam) (n-1)
+
+  let rec seznam_group podatki nov_seznam = match podatki with
+    | [] -> nov_seznam
+    | _ -> seznam_group (seznam_brez_prvih_n_elementov (podatki) ((List.length (one_group podatki [])) + 1)) (nov_seznam @ [ String.concat "" (one_group podatki []) ])
+
+  let explode s =
+    let rec exp i l =
+      if i < 0 then l else exp (i - 1) (s.[i] :: l) in
+    exp (String.length s - 1) []
+    (* Vir: https://stackoverflow.com/questions/10068713/string-to-list-of-char/10069969 *)
+
+  let vprasanja = ['a'; 'b'; 'c'; 'd'; 'e'; 'f'; 'g'; 'h'; 'i'; 'j'; 'k'; 'l'; 'm'; 'n'; 'o'; 'p'; 'q'; 'r'; 's'; 't'; 'u'; 'v'; 'w'; 'x'; 'y'; 'z']
+  
+  let list_characterjev string = if (String.length string) = 1 then [string.[0]] else explode string
+
+  let rec test vprasanja seznam nov_seznam = match seznam with
+    | [] -> nov_seznam
+    | x1 :: xs1 -> let rec test2 vprasanja n yesi odgovori = match n with
+                  | 26 -> test vprasanja xs1 (nov_seznam @ [yesi])
+                  | _ -> if (List.mem (List.nth vprasanja n) odgovori) then test2 vprasanja (n+1) (yesi+1) odgovori else test2 vprasanja (n+1) (yesi) odgovori
+                  in
+                  test2 vprasanja 0 0 (list_characterjev x1)
+
+  let naloga1 data =
+    let vrstice = String.split_on_char '\n' data in
+    let seznam_skupin = seznam_group vrstice [] in
+    let seznam_yesev = test vprasanja seznam_skupin [] in
+    let rezultat = string_of_int (List.sum seznam_yesev) in
+    rezultat
+
+  let rec one_group seznam new_group = match seznam with
+        | [] -> []
+        | x :: xs -> if (String.length x) = 0 then new_group else one_group xs (new_group @ [x])
+
+  let rec seznam_brez_prvih_n_elementov seznam n = if n <= 0 then seznam else seznam_brez_prvih_n_elementov (List.tl seznam) (n-1)
+
+  let rec seznam_group2 podatki nov_seznam = match podatki with
+    | [] -> nov_seznam
+    | _ -> seznam_group2 (seznam_brez_prvih_n_elementov (podatki) ((List.length (one_group podatki [])) + 1)) (nov_seznam @ [ one_group podatki [] ])
+
+  let vprasanja = ['a'; 'b'; 'c'; 'd'; 'e'; 'f'; 'g'; 'h'; 'i'; 'j'; 'k'; 'l'; 'm'; 'n'; 'o'; 'p'; 'q'; 'r'; 's'; 't'; 'u'; 'v'; 'w'; 'x'; 'y'; 'z']
+
+  let rec test3 vprasanja seznam nov_seznam = match seznam with
+    | [] -> nov_seznam
+    | x1 :: xs1 -> let rec test4 vprasanja n yesi1 odgovori = match n with
+                    | 26 -> test3 vprasanja xs1 (nov_seznam @ [yesi1])
+                    | _ -> let rec test5 crka odgovori = match odgovori with
+                            | [] -> test4 vprasanja (n+1) (yesi1 + 1) odgovori
+                            | x2 :: xs2 -> if not (List.mem crka (explode x2)) then test4 vprasanja (n+1) yesi1 odgovori else test5 crka xs2
+                            in
+                            test5 (List.nth vprasanja n) x1
+                    in
+                    test4 vprasanja 0 0 x1
+
+  let naloga2 data _part1 = 
+    let vrstice = String.split_on_char '\n' data in
+    let seznam_skupin2 = seznam_group2 vrstice [] in
+    let seznam_yesev2 = test3 vprasanja seznam_skupin2 [] in
+    let rezultat2 = string_of_int (List.sum seznam_yesev2) in
+    rezultat2
+
+end
+
 (* Poženemo zadevo *)
 let choose_solver : string -> (module Solver) = function
   | "1" -> (module Solver1)
@@ -421,6 +491,7 @@ let choose_solver : string -> (module Solver) = function
   | "3" -> (module Solver3)
   | "4" -> (module Solver4)
   | "5" -> (module Solver5)
+  | "6" -> (module Solver6)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
