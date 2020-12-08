@@ -556,6 +556,156 @@ module Solver7 : Solver = struct
 
 end
 
+module Solver8 : Solver = struct
+
+  let explode s =
+    let rec exp i l =
+      if i < 0 then l else exp (i - 1) (s.[i] :: l) in
+    exp (String.length s - 1) []
+    (* Vir: https://stackoverflow.com/questions/10068713/string-to-list-of-char/10069969 *)
+
+  let rec pobegni list nov_list = match list with
+    | [] -> nov_list
+    | x :: xs -> pobegni xs (nov_list @ [Char.escaped x])
+
+  let uredi_vrstico1 vrstica = String.split_on_char ' ' vrstica
+
+  let uredi_vrstico2 vrstica = []
+                              @ [List.hd vrstica] 
+                              @ [Char.escaped ((List.nth vrstica 1).[0])] 
+                              @ [String.concat "" (pobegni (List.tl (explode (List.nth vrstica 1))) [])]
+
+  let rec prvi_krog vrstica seznam_vseh kjer_smo_ze_bli kje_smo acc = match vrstica with
+    | x :: xs when (List.mem kje_smo kjer_smo_ze_bli) -> acc
+    | x :: y :: z :: [] -> 
+      let kaj_narest operacija plusminus stevilka = match operacija with
+        | "acc" -> if plusminus = "+" 
+                    then prvi_krog (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc + (int_of_string stevilka))
+                    else prvi_krog (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc - (int_of_string stevilka))
+        | "jmp" -> if plusminus = "+"
+                   then prvi_krog (List.nth seznam_vseh (kje_smo + (int_of_string stevilka))) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + (int_of_string stevilka)) acc
+                   else prvi_krog (List.nth seznam_vseh (kje_smo - (int_of_string stevilka))) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo - (int_of_string stevilka)) acc
+        | "nop" -> prvi_krog (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) acc
+        | _ -> failwith "To bi mogle bit edine možnosti"
+      in
+      kaj_narest x y z
+    | _ -> failwith "Do tega upejmo nau pršlo"
+
+  let rec urejene_vrstice neurejene urejene = match neurejene with
+    | [] -> urejene
+    | x :: xs -> urejene_vrstice xs (urejene @ [(uredi_vrstico2 (uredi_vrstico1 x))])
+
+  let naloga1 data =
+    let vrstice = List.lines data in
+    let prva_vrstica = uredi_vrstico2 (uredi_vrstico1 (List.hd vrstice)) in
+    let rezultat = string_of_int (prvi_krog prva_vrstica (urejene_vrstice vrstice []) [] 0 0) in
+    rezultat
+
+  let rec sesuvanje vrstica seznam_vseh kjer_smo_ze_bli kje_smo acc n = match vrstica with
+      | x :: xs when (List.mem kje_smo kjer_smo_ze_bli) -> false
+      | x :: y :: z :: [] when (kje_smo = n) -> 
+        let kaj_narest1 operacija plusminus stevilka = match operacija with
+          | "acc" -> if (kje_smo + 1) >= (List.length seznam_vseh) then true else
+                    if plusminus = "+" 
+                    then sesuvanje (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc + (int_of_string stevilka)) n
+                    else sesuvanje (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc - (int_of_string stevilka)) n
+          | "nop" -> if (plusminus = "+") && ((kje_smo + (int_of_string stevilka)) >= (List.length seznam_vseh)) then true else
+                    if (plusminus = "-") && ((kje_smo - (int_of_string stevilka)) < 0) then true else
+                    if plusminus = "+"
+                    then sesuvanje (List.nth seznam_vseh (kje_smo + (int_of_string stevilka))) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + (int_of_string stevilka)) acc n
+                    else sesuvanje (List.nth seznam_vseh (kje_smo - (int_of_string stevilka))) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo - (int_of_string stevilka)) acc n
+          | "jmp" -> if (kje_smo + 1) >= (List.length seznam_vseh) then true 
+                    else sesuvanje (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) acc n
+          | _ -> failwith "To bi mogle bit edine možnosti"
+        in
+        kaj_narest1 x y z
+      | x :: y :: z :: [] -> 
+        let kaj_narest2 operacija plusminus stevilka = match operacija with
+          | "acc" -> if (kje_smo + 1) >= (List.length seznam_vseh) then true else
+                    if plusminus = "+" 
+                    then sesuvanje (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc + (int_of_string stevilka)) n
+                    else sesuvanje (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc - (int_of_string stevilka)) n
+          | "jmp" -> if (plusminus = "+") && ((kje_smo + (int_of_string stevilka)) >= (List.length seznam_vseh)) then true else
+                    if (plusminus = "-") && ((kje_smo - (int_of_string stevilka)) < 0) then true else
+                    if plusminus = "+"
+                    then sesuvanje (List.nth seznam_vseh (kje_smo + (int_of_string stevilka))) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + (int_of_string stevilka)) acc n
+                    else sesuvanje (List.nth seznam_vseh (kje_smo - (int_of_string stevilka))) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo - (int_of_string stevilka)) acc n
+          | "nop" -> if (kje_smo + 1) >= (List.length seznam_vseh) then true 
+                    else sesuvanje (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) acc n
+          | _ -> failwith "To bi mogle bit edine možnosti"
+        in
+        kaj_narest2 x y z
+      | _ -> failwith "Do tega upejmo nau pršlo"
+
+  let rec prvi_krog2 vrstica seznam_vseh kjer_smo_ze_bli kje_smo acc n = match vrstica with
+    | x :: y :: z :: [] when ((kje_smo >= (List.length seznam_vseh)) || (kje_smo < 0)) -> acc
+    | x :: y :: z :: [] when (kje_smo = n) ->
+      let kaj_narest operacija plusminus stevilka = match operacija with
+        | "acc" -> if (kje_smo + 1) >= (List.length seznam_vseh) 
+                    then prvi_krog2 (vrstica) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc + (int_of_string stevilka)) n else
+                    if plusminus = "+" 
+                    then prvi_krog2 (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc + (int_of_string stevilka)) n
+                    else prvi_krog2 (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc - (int_of_string stevilka)) n
+        | "nop" -> if (plusminus = "+") && ((kje_smo + (int_of_string stevilka)) >= (List.length seznam_vseh)) 
+                  then prvi_krog2 (vrstica) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + (int_of_string stevilka)) acc n else
+                  if (plusminus = "-") && ((kje_smo - (int_of_string stevilka)) < 0) 
+                  then prvi_krog2 (vrstica) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo - (int_of_string stevilka)) acc n else
+                  if plusminus = "+"
+                  then prvi_krog2 (List.nth seznam_vseh (kje_smo + (int_of_string stevilka))) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + (int_of_string stevilka)) acc n
+                  else prvi_krog2 (List.nth seznam_vseh (kje_smo - (int_of_string stevilka))) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo - (int_of_string stevilka)) acc n
+        | "jmp" -> if (kje_smo + 1) >= (List.length seznam_vseh) 
+                  then prvi_krog2 (vrstica) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) acc n
+                  else prvi_krog2 (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) acc n
+        | _ -> failwith "To bi mogle bit edine možnosti"
+      in
+      kaj_narest x y z
+    | x :: y :: z :: [] -> 
+      let kaj_narest2 operacija plusminus stevilka = match operacija with
+        | "acc" -> if (kje_smo + 1) >= (List.length seznam_vseh) 
+                    then prvi_krog2 (vrstica) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc + (int_of_string stevilka)) n else
+                    if plusminus = "+" 
+                    then prvi_krog2 (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc + (int_of_string stevilka)) n
+                    else prvi_krog2 (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) (acc - (int_of_string stevilka)) n
+        | "jmp" -> if (plusminus = "+") && ((kje_smo + (int_of_string stevilka)) >= (List.length seznam_vseh)) 
+                  then prvi_krog2 (vrstica) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + (int_of_string stevilka)) acc n else
+                  if (plusminus = "-") && ((kje_smo - (int_of_string stevilka)) < 0) 
+                  then prvi_krog2 (vrstica) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo - (int_of_string stevilka)) acc n else
+                  if plusminus = "+"
+                  then prvi_krog2 (List.nth seznam_vseh (kje_smo + (int_of_string stevilka))) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + (int_of_string stevilka)) acc n
+                  else prvi_krog2 (List.nth seznam_vseh (kje_smo - (int_of_string stevilka))) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo - (int_of_string stevilka)) acc n
+        | "nop" -> if (kje_smo + 1) >= (List.length seznam_vseh) 
+                  then prvi_krog2 (vrstica) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) acc n
+                  else prvi_krog2 (List.nth seznam_vseh (kje_smo + 1)) seznam_vseh (kjer_smo_ze_bli @ [kje_smo]) (kje_smo + 1) acc n
+        | _ -> failwith "To bi mogle bit edine možnosti"
+      in
+      kaj_narest2 x y z
+    | _ -> failwith "Do tega upejmo nau pršlo"
+
+  let rec kdaj_se_sesuje seznam seznam_vseh n = match seznam with
+    | [] -> failwith "Že prej bi se mogl zgodit"
+    | x :: xs when ((List.length x) = 3) -> let ali_se_sesuje operacija = match operacija with
+                                            | "acc" -> kdaj_se_sesuje xs seznam_vseh (n+1)
+                                            | "jmp" | "nop" -> if (sesuvanje (List.hd seznam_vseh) seznam_vseh [] 0 0 n)
+                                                              then n
+                                                              else kdaj_se_sesuje xs seznam_vseh (n+1)
+                                            | _ -> failwith "Sj se to nau zgodil"
+                                            in
+                                            ali_se_sesuje (List.hd x)
+    | _ -> failwith "Očitno obstajajo vrstice k niso tolk dolge"
+
+
+
+  let naloga2 data _part1 =
+    let vrstice = List.lines data in
+    let prva_vrstica = uredi_vrstico2 (uredi_vrstico1 (List.hd vrstice)) in
+    let vse_vrstice = urejene_vrstice vrstice [] in
+    let zamenana_vrstica = string_of_int (kdaj_se_sesuje (urejene_vrstice vrstice []) (urejene_vrstice vrstice []) 0) in
+    let rezultat2 = string_of_int (prvi_krog2 prva_vrstica vse_vrstice [] 0 0 (int_of_string zamenana_vrstica)) in
+    rezultat2
+
+
+end
+
 (* Poženemo zadevo *)
 let choose_solver : string -> (module Solver) = function
   | "1" -> (module Solver1)
@@ -565,6 +715,7 @@ let choose_solver : string -> (module Solver) = function
   | "5" -> (module Solver5)
   | "6" -> (module Solver6)
   | "7" -> (module Solver7)
+  | "8" -> (module Solver8)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
