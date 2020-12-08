@@ -484,6 +484,78 @@ module Solver6 : Solver = struct
 
 end
 
+module Solver7 : Solver = struct
+
+  let loceno_s_presledki niz = String.split_on_char ' ' niz
+
+  let rec seznam_brez_prvih_n_elementov seznam n = if n <= 0 then seznam else seznam_brez_prvih_n_elementov (List.tl seznam) (n-1)
+
+  let rec eno_navodilo seznam1 nov_seznam1 = match seznam1 with
+    | [] -> nov_seznam1
+    | x1 :: rest1 -> let rec del_navodila seznam2 nov_seznam2 = match seznam2 with
+                      | [] -> failwith "Do tega nebi smel pridt"
+                      | x :: _ -> if x = "contain" || x = "bags," || x = "bag," || x = "bags." || x = "bag."
+                                  then eno_navodilo (seznam_brez_prvih_n_elementov seznam1 ((List.length nov_seznam2) + 1)) (nov_seznam1 @ [nov_seznam2])
+                                  else del_navodila (seznam_brez_prvih_n_elementov seznam2 1) (nov_seznam2 @ [x])
+                      in
+                      del_navodila seznam1 []
+
+  let rec seznam_navodil podatki nov_seznam = match podatki with
+    | [] -> nov_seznam
+    | x :: xs -> seznam_navodil xs (nov_seznam @ [eno_navodilo (loceno_s_presledki x) [] ])
+
+  let rec izbira_navodila lastnost barva navodila = match navodila with
+    | [] -> failwith "Ze prej bi mogla najdt tapravo"
+    | x :: xs -> if (List.mem lastnost (List.hd x)) && (List.mem barva (List.hd x)) then x else izbira_navodila lastnost barva xs
+
+  let rec a_lah_vsebuje_sajni_gold_vrecko navodila vrecka = match vrecka with
+    | [] | _ :: [] -> failwith "Ne bi smel do tega pridt"
+    | x1 :: xs1 -> let rec funkcija1 kar_ostane n = match n with
+                    | (-1) -> false
+                    | _ -> let funkcija x3 = if (List.mem "shiny" x3) && (List.mem "gold" x3) then true
+                                                      else if (List.mem "no" x3) then false
+                                                      else a_lah_vsebuje_sajni_gold_vrecko navodila (izbira_navodila (List.nth x3 1) (List.nth x3 2) navodila)
+                           in
+                           ((funkcija (List.nth kar_ostane n)) || (funkcija1 kar_ostane (n-1)))
+                   in
+                   funkcija1 xs1 ((List.length xs1)-1)
+
+  let rec stetje seznam_vreck navodila stevilo = match seznam_vreck with
+    | [] -> string_of_int stevilo
+    | x :: xs -> if (a_lah_vsebuje_sajni_gold_vrecko navodila x) then stetje xs navodila (stevilo + 1)
+                 else stetje xs navodila stevilo
+                  
+                 
+
+  let naloga1 data =
+    let vrstice = List.lines data in
+    let rezultat = stetje (seznam_navodil vrstice []) (seznam_navodil vrstice []) 0 in
+    rezultat
+
+  let izlocitev_podatkov del_vrece = match del_vrece with
+    | [] | _ :: [] | _ :: _ :: [] -> failwith "Upejmo, da se to ne zgodi"
+    | _ :: lastnost :: barva :: _ -> (lastnost, barva)
+
+  let nova_vreca (lastnost, barva) navodila = izbira_navodila lastnost barva navodila
+
+  let rec gremo_pogledat_v_vreco vreca navodila = match vreca with
+    | [] -> failwith "Nekej"
+    | x :: xs when (List.mem "no" (List.hd xs)) -> 1
+    | x :: xs -> let rec kaj_vsebuje_vreca vsebina n = match n with
+                  | (-1) -> 1
+                  | _ -> ((int_of_string (List.hd (List.nth vsebina n))) * (gremo_pogledat_v_vreco (nova_vreca (izlocitev_podatkov (List.nth vsebina n)) navodila) navodila)) + (kaj_vsebuje_vreca vsebina (n-1))
+                  in
+                  kaj_vsebuje_vreca xs ((List.length xs)-1)
+
+  let naloga2 data _part1 =
+    let vrstice = List.lines data in
+    let sajni_vreca = izbira_navodila "shiny" "gold" (seznam_navodil vrstice []) in
+    let rezultat = string_of_int ((gremo_pogledat_v_vreco (sajni_vreca) (seznam_navodil vrstice [])) - 1) in
+    rezultat
+
+
+end
+
 (* Poženemo zadevo *)
 let choose_solver : string -> (module Solver) = function
   | "1" -> (module Solver1)
@@ -492,6 +564,7 @@ let choose_solver : string -> (module Solver) = function
   | "4" -> (module Solver4)
   | "5" -> (module Solver5)
   | "6" -> (module Solver6)
+  | "7" -> (module Solver7)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
