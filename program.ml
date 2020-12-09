@@ -693,8 +693,6 @@ module Solver8 : Solver = struct
                                             ali_se_sesuje (List.hd x)
     | _ -> failwith "Očitno obstajajo vrstice k niso tolk dolge"
 
-
-
   let naloga2 data _part1 =
     let vrstice = List.lines data in
     let prva_vrstica = uredi_vrstico2 (uredi_vrstico1 (List.hd vrstice)) in
@@ -703,6 +701,66 @@ module Solver8 : Solver = struct
     let rezultat2 = string_of_int (prvi_krog2 prva_vrstica vse_vrstice [] 0 0 (int_of_string zamenana_vrstica)) in
     rezultat2
 
+end
+
+module Solver9 : Solver = struct
+
+  let rec seenafunkcija1 seznam nov_seznam stevilka n kje_smo mesto_stevilke = match seznam with
+    | [] -> nov_seznam
+    | x :: xs -> if (kje_smo >= (mesto_stevilke - n)) && (kje_smo < mesto_stevilke) then seenafunkcija1 xs (nov_seznam @ [x]) stevilka n (kje_smo + 1) mesto_stevilke
+                  else seenafunkcija1 xs (nov_seznam) stevilka n (kje_smo + 1) mesto_stevilke
+
+  let rec seenafunkcija seznam_25 stevilka = match seznam_25 with
+    | [] -> true
+    | x1 :: xs1 -> let rec funkcija prva_stevilka preostanek = match preostanek with
+                    | [] -> seenafunkcija xs1 stevilka
+                    | x2 :: xs2 -> if ((int_of_string x1) + (int_of_string x2) = stevilka) then false else funkcija prva_stevilka xs2
+                    in
+                    funkcija x1 xs1
+
+  let rec pregledovanje seznam mesto = match mesto with
+    | 1000 -> failwith "že prej bi mogl najdt"
+    | _ -> let poglejmo_jih_25_za_nazaj seznam_prejsnjih stevilka = 
+              if seenafunkcija seznam_prejsnjih stevilka
+              then stevilka else pregledovanje seznam (mesto+1)
+            in
+            poglejmo_jih_25_za_nazaj (seenafunkcija1 seznam [] (int_of_string (List.nth seznam mesto)) 25 0 mesto) (int_of_string (List.nth seznam mesto))
+
+  let rec seznam_intov seznam nov_seznam = match nov_seznam with
+    | [] -> nov_seznam
+    | x :: xs -> seznam_intov xs (nov_seznam @ [x])
+
+  let naloga1 data =
+    let vrstice = List.lines data in
+    let rezultat = string_of_int (pregledovanje vrstice 25) in
+    rezultat
+
+  let rec contiguous_set seznam rezultat = match seznam with
+    | [] -> failwith "Že prej bi mogl pridt"
+    | x :: xs -> let rec funkcija preostanek sestevek nov_seznam = match preostanek with
+                  | [] -> contiguous_set xs rezultat
+                  | x2 :: xs2 -> if ((sestevek + (int_of_string x2)) = rezultat) then (nov_seznam @ [x2]) else
+                                  if sestevek > rezultat then contiguous_set xs rezultat
+                                  else funkcija xs2 (sestevek + (int_of_string x2)) (nov_seznam @ [x2])
+                  in
+                  funkcija xs (int_of_string x) [x]
+
+  let rec najdi_max seznam = match seznam with
+    | [] -> 0
+    | x :: xs -> max (int_of_string x) (najdi_max xs)
+
+  let rec najdi_min seznam = match seznam with
+    | [] -> 0
+    | x :: xs -> min (int_of_string x) (najdi_max xs)
+
+
+  let naloga2 data _part1 =
+    let vrstice = List.lines data in
+    let zaporedne_stevilke = contiguous_set vrstice (int_of_string _part1) in
+    let max = (najdi_max zaporedne_stevilke) in
+    let min = (najdi_min zaporedne_stevilke) in
+    let rezultat2 = string_of_int (min + max) in
+    rezultat2
 
 end
 
@@ -716,6 +774,7 @@ let choose_solver : string -> (module Solver) = function
   | "6" -> (module Solver6)
   | "7" -> (module Solver7)
   | "8" -> (module Solver8)
+  | "9" -> (module Solver9)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
