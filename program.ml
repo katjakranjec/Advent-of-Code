@@ -764,6 +764,50 @@ module Solver9 : Solver = struct
 
 end
 
+module Solver10 : Solver = struct
+
+  let rec po_velikosti seznam nov_seznam n =
+    if ((List.length seznam) + 1) = (List.length nov_seznam) then nov_seznam else
+    if (List.mem (string_of_int n) seznam) then po_velikosti seznam (nov_seznam @ [n]) (n+1) else po_velikosti seznam nov_seznam (n+1)
+
+  let rec razlike seznam razlika1 razlika3 = match seznam with
+    | [] | _ :: [] -> razlika1 * razlika3
+    | x :: y :: rest -> if (y-x) = 1 then razlike (y :: rest) (razlika1 + 1) razlika3 else
+                        if (y-x) = 3 then razlike (y :: rest) razlika1 (razlika3 + 1) else
+                        razlike (y :: rest) razlika1 razlika3
+
+  let naloga1 data =
+    let vrstice = List.lines data in
+    let urejeni = po_velikosti vrstice [0] 1 in
+    let rezultat = string_of_int (razlike urejeni 0 1) in
+    rezultat
+
+  let rec funkcija_moznosti element ostali moznosti1 = match ostali with
+    | [] -> moznosti1
+    | x :: xs -> if (x = element + 1) || (x = element + 2) || (x = element + 3) then funkcija_moznosti element xs (moznosti1 @ [x])
+                  else funkcija_moznosti element xs moznosti1
+
+  let rec funkcija_preveri seznam element =
+    let moznosti moznosti2 = match moznosti2 with
+            | [] -> 0
+            | x :: [] -> (funkcija_preveri seznam x)
+            | x :: y :: [] -> (funkcija_preveri seznam x) + (funkcija_preveri seznam y) + 1
+            | x :: y :: z :: [] -> (funkcija_preveri seznam x) + (funkcija_preveri seznam y) + (funkcija_preveri seznam z) + 2
+            | _ -> failwith "Ne bi smel bit drugih moznosti"
+            in
+            moznosti (funkcija_moznosti element seznam [])
+  
+  let naloga2 data _part1 =
+    let vrstice = List.lines data in
+    let urejeni = po_velikosti vrstice [0] 1 in
+    print_endline "Še kr iz bohvet kerga razloga ne dela";
+    let nekej = (funkcija_preveri urejeni 1) in
+    print_endline "A ne sj dela";
+    let rezultat2 = string_of_int (nekej + 1) in
+    rezultat2
+
+end
+
 (* Poženemo zadevo *)
 let choose_solver : string -> (module Solver) = function
   | "1" -> (module Solver1)
@@ -775,6 +819,7 @@ let choose_solver : string -> (module Solver) = function
   | "7" -> (module Solver7)
   | "8" -> (module Solver8)
   | "9" -> (module Solver9)
+  | "10"-> (module Solver10)
   | _ -> failwith "Ni še rešeno"
 
 let main () =
