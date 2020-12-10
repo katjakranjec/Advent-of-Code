@@ -801,21 +801,17 @@ module Solver10 : Solver = struct
     | [] -> []
     | x :: xs -> if (List.hd x) = element then x else ali_je_ze_izracunan xs element
 
-  let rec najdi_max seznam = match seznam with
-  | [] -> 0
-  | x :: xs -> max (int_of_string x) (najdi_max xs)
-
   let rec obrni_seznam seznam nov_seznam = match seznam with
     | [] -> nov_seznam
-    | x :: xs -> obrni_seznam xs (nov_seznam @ [x])
+    | x :: xs -> obrni_seznam xs (x :: nov_seznam)
 
-  let rec funkcija_preveri2 seznam seznam_ze_izracunanih = match seznam with
+  let rec funkcija_preveri2 seznam cel_seznam seznam_ze_izracunanih = match seznam with
     | [] -> seznam_ze_izracunanih
     | element :: xs -> let rec funkcija_preveri3 seznam element seznam_ze_izracunanih =
                         let moznosti3 moznosti3 = match moznosti3 with
-                                | _  when (List.length (ali_je_ze_izracunan seznam_ze_izracunanih (List.hd seznam))) = 2 ->
-                                    List.nth (ali_je_ze_izracunan seznam_ze_izracunanih element) 1
                                 | [] -> 0
+                                | x :: _  when (List.length (ali_je_ze_izracunan seznam_ze_izracunanih element)) = 2 ->
+                                    List.nth (ali_je_ze_izracunan seznam_ze_izracunanih element) 1
                                 | x :: [] -> (funkcija_preveri3 seznam x seznam_ze_izracunanih)
                                 | x :: y :: [] -> (funkcija_preveri3 seznam x seznam_ze_izracunanih) + (funkcija_preveri3 seznam y seznam_ze_izracunanih) + 1
                                 | x :: y :: z :: [] -> (funkcija_preveri3 seznam x seznam_ze_izracunanih) + (funkcija_preveri3 seznam y seznam_ze_izracunanih) + (funkcija_preveri3 seznam z seznam_ze_izracunanih) + 2
@@ -823,15 +819,17 @@ module Solver10 : Solver = struct
                                 in
                                 moznosti3 (funkcija_moznosti element seznam [])
                         in
-                        funkcija_preveri2 xs (seznam_ze_izracunanih @ [[element; funkcija_preveri3 seznam element seznam_ze_izracunanih]])
+                        funkcija_preveri2 xs cel_seznam (seznam_ze_izracunanih @ [[element; funkcija_preveri3 cel_seznam element seznam_ze_izracunanih]])
+
+  (*let upejmo_da_delujoca_funkcija seznam izracunani*)
   
   let naloga2 data _part1 =
     let vrstice = List.lines data in
     let urejeni = po_velikosti vrstice [0] 1 in
     let obrnjeni = obrni_seznam urejeni [] in
-    let seznam_izracunanih = (funkcija_preveri2 obrnjeni []) in
-    let rezultat2 = string_of_int ((List.nth (List.nth seznam_izracunanih 0) 1) + 1) in
-    rezultat2 
+    let seznam_izracunanih = (funkcija_preveri2 obrnjeni obrnjeni []) in
+    let rezultat2 = string_of_int ((List.nth (List.nth seznam_izracunanih ((List.length obrnjeni)-1)) 1) + 1) in
+    rezultat2
 
 end
 
