@@ -786,8 +786,8 @@ module Solver10 : Solver = struct
     | [] -> moznosti1
     | x :: xs -> if (x = element + 1) || (x = element + 2) || (x = element + 3) then funkcija_moznosti element xs (moznosti1 @ [x])
                   else funkcija_moznosti element xs moznosti1
-
-  let rec funkcija_preveri seznam element =
+ 
+  (*let rec funkcija_preveri seznam element =
     let moznosti moznosti2 = match moznosti2 with
             | [] -> 0
             | x :: [] -> (funkcija_preveri seznam x)
@@ -795,16 +795,43 @@ module Solver10 : Solver = struct
             | x :: y :: z :: [] -> (funkcija_preveri seznam x) + (funkcija_preveri seznam y) + (funkcija_preveri seznam z) + 2
             | _ -> failwith "Ne bi smel bit drugih moznosti"
             in
-            moznosti (funkcija_moznosti element seznam [])
+            moznosti (funkcija_moznosti element seznam [])*)
+
+  let rec ali_je_ze_izracunan seznam element = match seznam with
+    | [] -> []
+    | x :: xs -> if (List.hd x) = element then x else ali_je_ze_izracunan xs element
+
+  let rec najdi_max seznam = match seznam with
+  | [] -> 0
+  | x :: xs -> max (int_of_string x) (najdi_max xs)
+
+  let rec obrni_seznam seznam nov_seznam = match seznam with
+    | [] -> nov_seznam
+    | x :: xs -> obrni_seznam xs (nov_seznam @ [x])
+
+  let rec funkcija_preveri2 seznam seznam_ze_izracunanih = match seznam with
+    | [] -> seznam_ze_izracunanih
+    | element :: xs -> let rec funkcija_preveri3 seznam element seznam_ze_izracunanih =
+                        let moznosti3 moznosti3 = match moznosti3 with
+                                | _  when (List.length (ali_je_ze_izracunan seznam_ze_izracunanih (List.hd seznam))) = 2 ->
+                                    List.nth (ali_je_ze_izracunan seznam_ze_izracunanih element) 1
+                                | [] -> 0
+                                | x :: [] -> (funkcija_preveri3 seznam x seznam_ze_izracunanih)
+                                | x :: y :: [] -> (funkcija_preveri3 seznam x seznam_ze_izracunanih) + (funkcija_preveri3 seznam y seznam_ze_izracunanih) + 1
+                                | x :: y :: z :: [] -> (funkcija_preveri3 seznam x seznam_ze_izracunanih) + (funkcija_preveri3 seznam y seznam_ze_izracunanih) + (funkcija_preveri3 seznam z seznam_ze_izracunanih) + 2
+                                | _ -> failwith "Ne bi smel bit drugih moznosti"
+                                in
+                                moznosti3 (funkcija_moznosti element seznam [])
+                        in
+                        funkcija_preveri2 xs (seznam_ze_izracunanih @ [[element; funkcija_preveri3 seznam element seznam_ze_izracunanih]])
   
   let naloga2 data _part1 =
     let vrstice = List.lines data in
     let urejeni = po_velikosti vrstice [0] 1 in
-    print_endline "Še kr iz bohvet kerga razloga ne dela";
-    let nekej = (funkcija_preveri urejeni 1) in
-    print_endline "A ne sj dela";
-    let rezultat2 = string_of_int (nekej + 1) in
-    rezultat2
+    let obrnjeni = obrni_seznam urejeni [] in
+    let seznam_izracunanih = (funkcija_preveri2 obrnjeni []) in
+    let rezultat2 = string_of_int ((List.nth (List.nth seznam_izracunanih 0) 1) + 1) in
+    rezultat2 
 
 end
 
